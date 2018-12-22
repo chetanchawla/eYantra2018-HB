@@ -45,23 +45,23 @@ end
 function aruco_callback(msg)
     -- Get the orientation(quaternion) of the ArUco marker and set the orientation of the hoop using Orientation_hoop dummy
     -- Hint : Go through the regular API - sim.setObjectQuaternion
-    len = #msg.poses
+    len = #msg.markers
     for i=1,len do
         ids[i]=msg.markers[i].id
-        val={msg.markers[i].pos.pos.orientation.x,msg.markers[i].pos.pos.orientation.y,msg.markers[i].pos.pos.orientation.z,msg.markers[i].pos.pos.orientation.w}
+        val={msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
         aruco[i]=val
     end
-    print(ids)
-    print(aruco)
+    --print(ids)
+    --print(aruco)
 
 end
 
 function whycon_callback(msg)
     -- Get the position of the whycon marker and set the position of the food tree and non-food tree using Position_hoop dummy
     -- Hint : Go through the regular API - sim.setObjectPosition
-    wx=msg.poses[0].position.x
-    wy=msg.poses[0].position.y
-    wz=msg.poses[0].position.z
+    wx=msg.poses[1].position.x
+    wy=msg.poses[1].position.y
+    wz=msg.poses[1].position.z
     wx = -7.557*wx
     wy = -7.604*wy
     wz = 55.60 - (18.97*wz)
@@ -70,7 +70,7 @@ end
 function key_callback(msg)
     -- Read key input to set or unset position and orientation of food and non-food trees
     print "koi key to dabi"
-    if msg == 1 then
+    if msg.data == 1 then
         print "1 aagya"
         for j =1,#ids do
             if ids[j] == 0 then
@@ -81,27 +81,31 @@ function key_callback(msg)
                 sim.setObjectQuaternion(red,cashew,aruco[j])
             end
         end
-    elseif msg==2 then
+    elseif msg.data==2 then
         sim.setObjectPosition(sal,-1,{wx,wy,wz})
+        print wx,wy,wz
         wx=2.9
         wy=0.5080
         wz=0.6779
-    elseif msg==3 then
+    elseif msg.data==3 then
         sim.setObjectPosition(mango,-1,{wx,wy,wz})
+        print wx,wy,wz
         wx=2.9
         wy=0.5080
         wz=0.6779
-    elseif msg==4 then
+    elseif msg.data==4 then
         sim.setObjectPosition(cashew,-1,{wx,wy,wz})
+        print wx,wy,wz
         wx=2.9
         wy=0.5080
         wz=0.6779
-    elseif msg==5 then
+    elseif msg.data==5 then
         sim.setObjectPosition(nofruit,-1,{wx,wy,wz})
+        print wx,wy,wz
         wx=2.9
         wy=0.5080
         wz=0.6779
-    elseif msg==6 then
+    elseif msg.data==6 then
     	wx=2.9
     	wy=0.5080
         wz=0.6779
