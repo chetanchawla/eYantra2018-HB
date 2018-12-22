@@ -12,13 +12,13 @@ function sysCall_init()
 
     -- Add required handles here
 
-    green=setObjectHandler('Orientation_hoop3')
-    yellow=setObjectHandler('Orientation_hoop2')
-    red=setObjectHandler('Orientation_hoop1')
-    cashew=setObjectHandler('Position_hoop3')
-    mango=setObjectHandler('Position_hoop2')
-    sal=setObjectHandler('Position_hoop1')
-    nofruit=setObjectHandler('obstacle_1')
+    green=sim.getObjectHandle('Orientation_hoop3')
+    yellow=sim.getObjectHandle('Orientation_hoop2')
+    red=sim.getObjectHandle('Orientation_hoop1')
+    cashew=sim.getObjectHandle('Position_hoop3')
+    mango=sim.getObjectHandle('Position_hoop2')
+    sal=sim.getObjectHandle('Position_hoop1')
+    nofruit=sim.getObjectHandle('obstacle_1')
 
     -- Subscribing to the required topics 
     --aruco_sub = simROS.subscribe('/aruco_marker_publisher/markers', 'aruco_msgs/MarkerArray', 'aruco_callback')
@@ -69,7 +69,9 @@ end
 
 function key_callback(msg)
     -- Read key input to set or unset position and orientation of food and non-food trees
+    print "koi key to dabi"
     if msg == 1 then
+        print "1 aagya"
         for j =1,#ids do
             if ids[j] == 0 then
                 sim.setObjectQuaternion(green,sal,aruco[j])
