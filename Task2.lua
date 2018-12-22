@@ -80,24 +80,32 @@ function key_callback(msg)
             end
         end
     elseif msg==2 then
-        sim.setObjectPosition(sal,-1,(wx,wy,wz))
+        sim.setObjectPosition(sal,-1,{wx,wy,wz})
         wx=2.9
         wy=0.5080
         wz=0.6779
     elseif msg==3 then
-        sim.setObjectPosition(mango,-1,(wx,wy,wz))
+        sim.setObjectPosition(mango,-1,{wx,wy,wz})
         wx=2.9
         wy=0.5080
         wz=0.6779
     elseif msg==4 then
-        sim.setObjectPosition(cashew,-1,(wx,wy,wz))
+        sim.setObjectPosition(cashew,-1,{wx,wy,wz})
         wx=2.9
         wy=0.5080
         wz=0.6779
     elseif msg==5 then
-        sim.setObjectPosition(nofruit,-1,(wx,wy,wz))
+        sim.setObjectPosition(nofruit,-1,{wx,wy,wz})
         wx=2.9
         wy=0.5080
         wz=0.6779
+    elseif msg==6 then
+    	wx=2.9
+    	wy=0.5080
+        wz=0.6779
+    	sim.setObjectPosition(sal,-1,{wx,wy,wz})
+    	sim.setObjectPosition(mango,-1,{wx+1,wy,wz})
+    	sim.setObjectPosition(cashew,-1,{wx+2,wy,wz})
+    	sim.setObjectPosition(nofruit,-1,{wx+3,wy,wz})
     end
 end
