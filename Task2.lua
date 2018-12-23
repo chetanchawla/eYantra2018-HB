@@ -12,9 +12,9 @@ function sysCall_init()
 
     -- Add required handles here
 
-    green=sim.getObjectHandle('Orientation_hoop3')
+    green=sim.getObjectHandle('Orientation_hoop1')
     yellow=sim.getObjectHandle('Orientation_hoop2')
-    red=sim.getObjectHandle('Orientation_hoop1')
+    red=sim.getObjectHandle('Orientation_hoop3')
     cashew=sim.getObjectHandle('Position_hoop3')
     mango=sim.getObjectHandle('Position_hoop2')
     sal=sim.getObjectHandle('Position_hoop1')
@@ -49,6 +49,8 @@ function aruco_callback(msg)
     for i=1,len do
         ids[i]=msg.markers[i].id
         val={msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
+        print(val)
+        --val={0,0,0,0}
         aruco[i]=val
     end
     --print(ids)
@@ -62,9 +64,9 @@ function whycon_callback(msg)
     wx=msg.poses[1].position.x
     wy=msg.poses[1].position.y
     wz=msg.poses[1].position.z
-    wx = -7.557*wx
-    wy = -7.604*wy
-    wz = 55.60 - (18.97*wz)
+    wx = wx/(-7.557)  --27.12
+    wy = wy/(-7.604)  --37.63
+    wz = (55.60 -18- wz)/18.97 -- -270.1149
 end
 
 function key_callback(msg)
@@ -74,44 +76,52 @@ function key_callback(msg)
         print "1 aagya"
         for j =1,#ids do
             if ids[j] == 0 then
+                print "set green"
                 sim.setObjectQuaternion(green,sal,aruco[j])
+                print(aruco[j])
             elseif ids[j] == 1 then
+                print "set yellow"
                 sim.setObjectQuaternion(yellow,mango,aruco[j])
+                print(aruco[j])
             elseif ids[j] == 2 then
+                print "set red"
                 sim.setObjectQuaternion(red,cashew,aruco[j])
+                print(aruco[j])
             end
         end
     elseif msg.data==2 then
         sim.setObjectPosition(sal,-1,{wx,wy,wz})
-        print wx,wy,wz
+        --print wx
+        --print wy
+        --print wz
         wx=2.9
         wy=0.5080
         wz=0.6779
     elseif msg.data==3 then
         sim.setObjectPosition(mango,-1,{wx,wy,wz})
-        print wx,wy,wz
+        --print wx,wy,wz
         wx=2.9
         wy=0.5080
         wz=0.6779
     elseif msg.data==4 then
         sim.setObjectPosition(cashew,-1,{wx,wy,wz})
-        print wx,wy,wz
+        --print wx,wy,wz
         wx=2.9
         wy=0.5080
         wz=0.6779
     elseif msg.data==5 then
         sim.setObjectPosition(nofruit,-1,{wx,wy,wz})
-        print wx,wy,wz
+        --print wx,wy,wz
         wx=2.9
         wy=0.5080
         wz=0.6779
     elseif msg.data==6 then
-    	wx=2.9
-    	wy=0.5080
+        wx=2.9
+        wy=0.5080
         wz=0.6779
-    	sim.setObjectPosition(sal,-1,{wx,wy,wz})
-    	sim.setObjectPosition(mango,-1,{wx+1,wy,wz})
-    	sim.setObjectPosition(cashew,-1,{wx+2,wy,wz})
-    	sim.setObjectPosition(nofruit,-1,{wx+3,wy,wz})
+        sim.setObjectPosition(sal,-1,{wx,wy,wz})
+        sim.setObjectPosition(mango,-1,{wx+1,wy,wz})
+        sim.setObjectPosition(cashew,-1,{wx+2,wy,wz})
+        sim.setObjectPosition(nofruit,-1,{wx+3,wy,wz})
     end
 end
