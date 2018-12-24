@@ -48,8 +48,14 @@ function aruco_callback(msg)
     len = #msg.markers
     for i=1,len do
         ids[i]=msg.markers[i].id
-        val={msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
-        print(val)
+        --val={msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,-msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
+        --val={msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,msg.markers[i].pose.pose.orientation.z,-msg.markers[i].pose.pose.orientation.w}
+        --val={-msg.markers[i].pose.pose.orientation.x,-msg.markers[i].pose.pose.orientation.y,msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
+        --val={msg.markers[i].pose.pose.orientation.x,-msg.markers[i].pose.pose.orientation.y,-msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
+        val={-msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,-msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
+
+
+        --print(val)
         --val={0,0,0,0}
         aruco[i]=val
     end
@@ -65,8 +71,11 @@ function whycon_callback(msg)
     wy=msg.poses[1].position.y
     wz=msg.poses[1].position.z
     wx = wx/(-7.557)  --27.12
-    wy = wy/(-7.604)  --37.63
-    wz = (55.60 -18- wz)/18.97 -- -270.1149
+    wy = -wy/(-7.604)  --37.63
+    --wz = 3.043-0.0827*wz -- -270.1149
+    wz=2.66931-0.08738*wz
+    --wz=wz/(-4)
+
 end
 
 function key_callback(msg)
@@ -77,15 +86,15 @@ function key_callback(msg)
         for j =1,#ids do
             if ids[j] == 0 then
                 print "set green"
-                sim.setObjectQuaternion(green,sal,aruco[j])
+                sim.setObjectQuaternion(green,-1,aruco[j])
                 print(aruco[j])
             elseif ids[j] == 1 then
                 print "set yellow"
-                sim.setObjectQuaternion(yellow,mango,aruco[j])
+                sim.setObjectQuaternion(yellow,-1,aruco[j])
                 print(aruco[j])
             elseif ids[j] == 2 then
                 print "set red"
-                sim.setObjectQuaternion(red,cashew,aruco[j])
+                sim.setObjectQuaternion(red,-1,aruco[j])
                 print(aruco[j])
             end
         end
