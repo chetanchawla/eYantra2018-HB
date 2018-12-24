@@ -1,30 +1,33 @@
+--* Team Id : #5374
+--* Author List : Divyansh Malhotra, Chetan Chawla, Himanshu, Yashvi Gulati
+--* Filename: Task2.lua
+--* Theme: Hungry Bird
+--* Functions: sysCall_init,aruco_callback,whycon_callback,key_callback,sysCall_actuation,sysCall_sensing,sysCall_cleanup
+--* Global Variables: aruco,ids
+
+
 -- This script is used for realtime emulation of the environment in V-REP
-wx=2.9
-wy=0.5080
-wz=0.6779
-ax=0.0
-ay=0.0
-az=0.0
-aw=0.0
-aruco={}
-ids={}
+aruco={}   --To save aruco marker orientations of all the aruco markers
+ids={}     -- To save the ids of the aruco markers present in the scene
+
+--* Function Name: sysCall_init
+--* Logic: to get object handles and subscribe to required topics
 function sysCall_init()
 
-    -- Add required handles here
+    -- Object handles 
 
-    green=sim.getObjectHandle('Orientation_hoop1')
-    yellow=sim.getObjectHandle('Orientation_hoop2')
-    red=sim.getObjectHandle('Orientation_hoop3')
-    cashew=sim.getObjectHandle('Position_hoop3')
-    mango=sim.getObjectHandle('Position_hoop2')
-    sal=sim.getObjectHandle('Position_hoop1')
-    nofruit=sim.getObjectHandle('obstacle_1')
+    green=sim.getObjectHandle('Orientation_hoop1')  --sal tree's hoop
+    yellow=sim.getObjectHandle('Orientation_hoop2') --mango tree's hoop
+    red=sim.getObjectHandle('Orientation_hoop3')    --cashew tree's hoop
+    cashew=sim.getObjectHandle('Position_hoop3')	--cashew tree
+    mango=sim.getObjectHandle('Position_hoop2')		--mango tree
+    sal=sim.getObjectHandle('Position_hoop1')		--sal tree
+    nofruit=sim.getObjectHandle('obstacle_1')		--non-fruit tree
 
     -- Subscribing to the required topics 
-    --aruco_sub = simROS.subscribe('/aruco_marker_publisher/markers', 'aruco_msgs/MarkerArray', 'aruco_callback')
-    aruco_sub=simROS.subscribe('/aruco_marker_publisher/markers','aruco_msgs/MarkerArray','aruco_callback')
-    whycon_sub = simROS.subscribe('/whycon/poses', 'geometry_msgs/PoseArray', 'whycon_callback')
-    key_input = simROS.subscribe('/input_key', 'std_msgs/Int16', 'key_callback')
+    aruco_sub=simROS.subscribe('/aruco_marker_publisher/markers','aruco_msgs/MarkerArray','aruco_callback') --to find the orientation of the aruco markers in a scene  
+    whycon_sub = simROS.subscribe('/whycon/poses', 'geometry_msgs/PoseArray', 'whycon_callback')			--to find the whycon position values of the whycon marker in the scene
+    key_input = simROS.subscribe('/input_key', 'std_msgs/Int16', 'key_callback')							--to get input on pressing a key on keyboard in the terminal
 end
 
 
@@ -41,96 +44,79 @@ function sysCall_cleanup()
 end
 
 
-
+--* Function Name: aruco_callback
+--* Input: msg- aruco orientation quaternion 
+--* Logic: Get the orientation(quaternion) of the ArUco marker and save it in 'aruco' and their respective ids in 'ids'
 function aruco_callback(msg)
-    -- Get the orientation(quaternion) of the ArUco marker and set the orientation of the hoop using Orientation_hoop dummy
-    -- Hint : Go through the regular API - sim.setObjectQuaternion
-    len = #msg.markers
+    
+    len = #msg.markers --len=no. of aruco markers in the scene
     for i=1,len do
         ids[i]=msg.markers[i].id
-        --val={msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,-msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
-        --val={msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,msg.markers[i].pose.pose.orientation.z,-msg.markers[i].pose.pose.orientation.w}
-        --val={-msg.markers[i].pose.pose.orientation.x,-msg.markers[i].pose.pose.orientation.y,msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
-        --val={msg.markers[i].pose.pose.orientation.x,-msg.markers[i].pose.pose.orientation.y,-msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
+        --The signs have been set in accordance to our camera orientation with respect to the flex:(-x,y,-z,w)
         val={-msg.markers[i].pose.pose.orientation.x,msg.markers[i].pose.pose.orientation.y,-msg.markers[i].pose.pose.orientation.z,msg.markers[i].pose.pose.orientation.w}
-
-
-        --print(val)
-        --val={0,0,0,0}
-        aruco[i]=val
+        aruco[i]=val 
+        --the orientation of the specfic tree can be found out by utilising the index of its id in 'ids' and accessing that index's quaternion from 'aruco'
     end
-    --print(ids)
-    --print(aruco)
-
 end
 
+--* Function Name: whycon_callback
+--* Input: msg- whycon position coordinate 
+--* Logic: Get the position of the whycon marker. Only one marker is present at once in the scene.
 function whycon_callback(msg)
-    -- Get the position of the whycon marker and set the position of the food tree and non-food tree using Position_hoop dummy
-    -- Hint : Go through the regular API - sim.setObjectPosition
+     
     wx=msg.poses[1].position.x
     wy=msg.poses[1].position.y
     wz=msg.poses[1].position.z
-    wx = wx/(-7.557)  --27.12
-    wy = -wy/(-7.604)  --37.63
-    --wz = 3.043-0.0827*wz -- -270.1149
+    -- Conversion of whycon ccordinates to real world
+    wx = wx/(-7.557)  
+    wy = wy/(7.604) 
     wz=2.66931-0.08738*wz
-    --wz=wz/(-4)
-
 end
 
+--* Function Name: key_callback
+--* Input: msg- integer value corresponding to a key clicked on the keyboard 
+--* Logic: Read key input to set or unset position and orientation of food and non-food trees and then do accordingly
 function key_callback(msg)
-    -- Read key input to set or unset position and orientation of food and non-food trees
-    print "koi key to dabi"
+    
     if msg.data == 1 then
-        print "1 aagya"
-        for j =1,#ids do
+        for j =1,#ids do  -- run for all aruco markers scanned on the scene
             if ids[j] == 0 then
-                print "set green"
+                --set orientation of sal tree
                 sim.setObjectQuaternion(green,-1,aruco[j])
-                print(aruco[j])
             elseif ids[j] == 1 then
-                print "set yellow"
+                --set orientation of mango tree
                 sim.setObjectQuaternion(yellow,-1,aruco[j])
-                print(aruco[j])
             elseif ids[j] == 2 then
-                print "set red"
+                --set orientation of cashew tree
                 sim.setObjectQuaternion(red,-1,aruco[j])
-                print(aruco[j])
             end
         end
+    
     elseif msg.data==2 then
+        --set position of sal tree
         sim.setObjectPosition(sal,-1,{wx,wy,wz})
-        --print wx
-        --print wy
-        --print wz
-        wx=2.9
-        wy=0.5080
-        wz=0.6779
+    
     elseif msg.data==3 then
+    	--set position of mango tree
         sim.setObjectPosition(mango,-1,{wx,wy,wz})
-        --print wx,wy,wz
-        wx=2.9
-        wy=0.5080
-        wz=0.6779
+    
     elseif msg.data==4 then
+        --set position of cashew tree
         sim.setObjectPosition(cashew,-1,{wx,wy,wz})
-        --print wx,wy,wz
-        wx=2.9
-        wy=0.5080
-        wz=0.6779
+        
     elseif msg.data==5 then
-        sim.setObjectPosition(nofruit,-1,{wx,wy,wz})
-        --print wx,wy,wz
-        wx=2.9
-        wy=0.5080
-        wz=0.6779
+        --set position of non-fruit tree
+        sim.setObjectPosition(nofruit,-1,{wx,wy,wz+0.3})
+
     elseif msg.data==6 then
+    	-- set all trees outside the arena before setting their positions
+    	--setting wx,wy,wz to values that are outside of arena
         wx=2.9
         wy=0.5080
         wz=0.6779
-        sim.setObjectPosition(sal,-1,{wx,wy,wz})
-        sim.setObjectPosition(mango,-1,{wx+1,wy,wz})
-        sim.setObjectPosition(cashew,-1,{wx+2,wy,wz})
-        sim.setObjectPosition(nofruit,-1,{wx+3,wy,wz})
+        sim.setObjectPosition(sal,-1,{wx,wy,wz})  		--set sal outside the arena
+        sim.setObjectPosition(mango,-1,{wx+1,wy,wz})	--set mango outside the arena
+        sim.setObjectPosition(cashew,-1,{wx+2,wy,wz})	--set cashew outside the arena
+        sim.setObjectPosition(nofruit,-1,{wx+3,wy,wz})	--set non-fruit tree outside the arena
     end
 end
