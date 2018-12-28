@@ -41,7 +41,8 @@ class Edrone():
 		self.drone_position = [0.0,0.0,0.0,0.0]	
 		
 		# [x_setpoint, y_setpoint, z_setpoint, yaw_value_setpoint]
-		self.setpoint = [-8.39,4.98,27.92,0.00] # whycon marker at the position of the dummy given in the scene. Make the whycon marker associated with position_to_hold dummy renderable and make changes accordingly
+		#self.setpoint = [-8.39,4.98,27.2,0.00] # whycon marker at the position of the dummy given in the scene. Make the whycon marker associated with position_to_hold dummy renderable and make changes accordingly
+		self.setpoint = [5,5,30,0]
 		#Here, the yaw desired is taken to be 0 while all the other point values are taken from the Target whycon marker (set renderable) as detected by the vision sensor.
 
 		#Declaring a cmd of message type PlutoMsg and initializing values
@@ -59,26 +60,24 @@ class Edrone():
 
 		#initial setting of Kp, Kd and ki for [pitch, roll, throttle, yaw]. eg: self.Kp[2] corresponds to Kp value in throttle axis
 		#after tuning and computing corresponding PID parameters, change the parameters
-		self.Kp = [7.68,7.68,58.32,0]
-		self.Ki = [0,0,0.256,0]
-		self.Kd = [6.3,12.9,227.7,0]
+		# self.Kp = [7.68,7.68,58.32,0]
+		# self.Ki = [0,0,0.256,0]
+		# self.Kd = [6.3,12.9,227.7,0]
 		#As the drone is not rotating itself, we are using yaw parameters as 0.
-		#self.Kp = [0,0,0,0]
-		#self.Ki = [0,0,0,0]
-		#self.Kd = [0,0,0,0]
+		self.Kp = [1.68,1.68,3,1.0]
+		self.Ki = [0,0,0,0]
+		self.Kd = [20,30,50,20]
 
 
 		#-----------------------Add other required variables for pid here ----------------------------------------------
-
-
-                self.prev_error=[0.0,0.0,0.0,0.0]#It saves previous error (roor in the last pid function call)
-                self.dif_error=[0.0,0.0,0.0,0.0]#It stores the difference between current and the previous error(differential)
-                self.sum_values=[0.0,0.0,0.0,0.0]#It stores the addition of error terms for iterms
-                self.error=[0.0,0.0,0.0,0.0]#It stores the current computed error between desired point and self point
-                self.lasttime=time.time()#Used for sample time calling of the pid function
-                self.currenttime=0
-                self.max_values = [1800,1800,1600,1800]#The max and min values of pitch, roll, throttle and yaw are specified 
-                self.min_values = [1200,1200,1400,1200]
+		self.prev_error=[0.0,0.0,0.0,0.0]#It saves previous error (roor in the last pid function call)
+		self.dif_error=[0.0,0.0,0.0,0.0]#It stores the difference between current and the previous error(differential)
+		self.sum_values=[0.0,0.0,0.0,0.0]#It stores the addition of error terms for iterms
+		self.error=[0.0,0.0,0.0,0.0]#It stores the current computed error between desired point and self point
+		self.lasttime=time.time()#Used for sample time calling of the pid function
+		self.currenttime=0
+		self.max_values = [1800,1800,2000,1800]#The max and min values of pitch, roll, throttle and yaw are specified
+		self.min_values = [1200,1200,1400,1200]
 
 
 		# Hint : Add variables for storing previous errors in each axis, like self.prev_values = [0,0,0,0] where corresponds to [pitch, roll, throttle, yaw]
@@ -94,11 +93,10 @@ class Edrone():
 		# Making Publishers for /drone_command, /alt_error, /pitch_error, /roll_error, /yaw_error
 		self.command_pub = rospy.Publisher('/drone_command', PlutoMsg, queue_size=1)
 		#------------------------Add other ROS Publishers here- Errors are piblished-----------------------------------------------------
-
-                self.alterr=rospy.Publisher('/alt_error',Float64,queue_size=1)
-                self.pitcherr=rospy.Publisher('/pitch_error',Float64,queue_size=1)
-                self.rollerr=rospy.Publisher('/roll_error',Float64,queue_size=1)
-                self.yawerr=rospy.Publisher('/yaw_error',Float64,queue_size=1)
+		self.alterr=rospy.Publisher('/alt_error',Float64,queue_size=1)
+		self.pitcherr=rospy.Publisher('/pitch_error',Float64,queue_size=1)
+		self.rollerr=rospy.Publisher('/roll_error',Float64,queue_size=1)
+		self.yawerr=rospy.Publisher('/yaw_error',Float64,queue_size=1)
 
 		#-----------------------------------------------------------------------------------------------------------
 
@@ -108,10 +106,10 @@ class Edrone():
 		rospy.Subscriber('/pid_tuning_altitude',PidTune,self.altitude_set_pid)
 		rospy.Subscriber('/input_key',Int16,self.getInp)
 		#-------------------------Add other ROS Subscribers here----------------------------------------------------
-                rospy.Subscriber('/pid_tuning_pitch',PidTune,self.pitch_set_pid)
-                rospy.Subscriber('/pid_tuning_roll',PidTune,self.roll_set_pid)
-                rospy.Subscriber('/pid_tuning_yaw',PidTune,self.yaw_set_pid)
-                rospy.Subscriber('/drone_yaw',Float64,self.setyaw)
+		rospy.Subscriber('/pid_tuning_pitch',PidTune,self.pitch_set_pid)
+		rospy.Subscriber('/pid_tuning_roll',PidTune,self.roll_set_pid)
+		rospy.Subscriber('/pid_tuning_yaw',PidTune,self.yaw_set_pid)
+		rospy.Subscriber('/drone_yaw',Float64,self.setyaw)
 		#------------------------------------------------------------------------------------------------------------
 
 		self.arm() # ARMING THE DRONE
@@ -145,8 +143,8 @@ class Edrone():
 		self.drone_position[0] = msg.poses[0].position.x
 
 		#--------------------Set the remaining co-ordinates of the drone from msg----------------------------------------------
-                self.drone_position[1] = msg.poses[0].position.y
-                self.drone_position[2] = msg.poses[0].position.z
+		self.drone_position[1] = msg.poses[0].position.y
+		self.drone_position[2] = msg.poses[0].position.z
 		#---------------------------------------------------------------------------------------------------------------
 
 
@@ -193,19 +191,19 @@ class Edrone():
                 self.currenttime=time.time()#Takes the current time stamp
                 self.error=[a1-b1 for a1,b1 in zip(self.drone_position,self.setpoint)]#Calculates the error by subtracting drone position and setpoint positions
                 self.pitcherr.publish(self.error[0])#Publishes the respective errors for the plot juggler
-            	self.rollerr.publish(self.error[1])
-            	self.alterr.publish(self.error[2])
-            	self.yawerr.publish(self.error[3])
+                self.rollerr.publish(self.error[1])
+                self.alterr.publish(self.error[2])
+                self.yawerr.publish(self.error[3])
                 self.sum_values=[a1+b1 for a1,b1 in zip(self.sum_values,self.error)]#sum of previous error values are added together for the given sample time
                 if(self.currenttime-self.lasttime>=self.iterations*self.sample_time):
 
                 	# If the sample time has elapsed, tune PID
 		                self.dif_error= [a1-b1 for a1,b1 in zip(self.error,self.prev_error)]#derivative term- difference between current and previous error
 		                #Pitch, Roll, Throttle and Yaw are calculated with PID formulas
-		                self.cmd.rcPitch=1500+self.error[0]*self.Kp[0]+self.dif_error[0]*self.Kd[0]/(self.interactions*self.sample_time)+self.sum_values[0]*self.Ki[0]*self.sample_time*self.interactions
-		                self.cmd.rcRoll=1500+self.error[1]*self.Kp[1]+self.dif_error[1]*self.Kd[1]/(self.sample_time*self.interactions)+self.sum_values[1]*self.Ki[1]*self.sample_time*self.interactions
-		                self.cmd.rcThrottle=1500+self.error[2]*self.Kp[2]+self.dif_error[2]*self.Kd[2]/(self.sample_time*self.interactions)+self.sum_values[2]*self.Ki[2]*self.sample_time*self.interactions
-		                self.cmd.rcYaw=1500+self.error[3]*self.Kp[3]+self.dif_error[3]*self.Kd[3]/(self.sample_time*self.interactions)+self.sum_values[3]*self.Ki[3]*self.sample_time*self.interactions
+		                self.cmd.rcPitch=int(1500+self.error[0]*self.Kp[0]+self.dif_error[0]*self.Kd[0]/(self.iterations*self.sample_time)+self.sum_values[0]*self.Ki[0]*self.sample_time*self.iterations)
+		                self.cmd.rcRoll=int(1500+self.error[1]*self.Kp[1]+self.dif_error[1]*self.Kd[1]/(self.sample_time*self.iterations)+self.sum_values[1]*self.Ki[1]*self.sample_time*self.iterations)
+		                self.cmd.rcThrottle=int(1500+self.error[2]*self.Kp[2]+self.dif_error[2]*self.Kd[2]/(self.sample_time*self.iterations)+self.sum_values[2]*self.Ki[2]*self.sample_time*self.iterations)
+		                self.cmd.rcYaw=int(1500+self.error[3]*self.Kp[3]+self.dif_error[3]*self.Kd[3]/(self.sample_time*self.iterations)+self.sum_values[3]*self.Ki[3]*self.sample_time*self.iterations)
 		                self.lasttime=self.currenttime#The last time stamp is updated
 		                self.prev_error=self.error#Previous error term is updated
 		                #self.sum_values=[0.0,0.0,0.0,0.0]#Sum of errors is reinitialized after sample time
@@ -233,7 +231,7 @@ class Edrone():
 
 	def getInp(self,msg):
 		if msg==7:
-			self.arm()
+			self.disarm()
 		elif msg==8:
 			e_drone=Edrone()
 			while not rospy.is_shutdown():
