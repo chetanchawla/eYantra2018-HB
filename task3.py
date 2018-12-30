@@ -21,6 +21,7 @@ CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MA
 
 from plutodrone.msg import *
 from geometry_msgs.msg import PoseArray
+from plutodrone.srv import *
 from std_msgs.msg import Int16
 from std_msgs.msg import Int64
 from std_msgs.msg import Float64
@@ -35,14 +36,14 @@ class Edrone():
 	def __init__(self):
 		
 		rospy.init_node('drone_control')	# initializing ros node with name drone_control
-
+		#rospy.init_node('drone_board_data')
 		# This corresponds to your current position of drone. This value must be updated each time in your whycon callback
 		# [x,y,z,yaw_value]
 		self.drone_position = [0.0,0.0,0.0,0.0]	
 		
 		# [x_setpoint, y_setpoint, z_setpoint, yaw_value_setpoint]
 		#self.setpoint = [-8.39,4.98,27.2,0.00] # whycon marker at the position of the dummy given in the scene. Make the whycon marker associated with position_to_hold dummy renderable and make changes accordingly
-		self.setpoint = [5,5,30,0]
+		self.setpoint = [0,0,20,0]
 		#Here, the yaw desired is taken to be 0 while all the other point values are taken from the Target whycon marker (set renderable) as detected by the vision sensor.
 
 		#Declaring a cmd of message type PlutoMsg and initializing values
@@ -64,9 +65,12 @@ class Edrone():
 		# self.Ki = [0,0,0.256,0]
 		# self.Kd = [6.3,12.9,227.7,0]
 		#As the drone is not rotating itself, we are using yaw parameters as 0.
-		self.Kp = [1.68,1.68,3,1.0]
+		# self.Kp = [3.8,3.8,0,0]
+		# self.Ki = [0,0,0,0]
+		# self.Kd = [30,30,0,0]
+		self.Kp = [1,0.5,24,0]
 		self.Ki = [0,0,0,0]
-		self.Kd = [20,30,50,20]
+		self.Kd = [7,3.5,4,0]
 
 
 		#-----------------------Add other required variables for pid here ----------------------------------------------
@@ -109,9 +113,10 @@ class Edrone():
 		rospy.Subscriber('/pid_tuning_pitch',PidTune,self.pitch_set_pid)
 		rospy.Subscriber('/pid_tuning_roll',PidTune,self.roll_set_pid)
 		rospy.Subscriber('/pid_tuning_yaw',PidTune,self.yaw_set_pid)
-		rospy.Subscriber('/drone_yaw',Float64,self.setyaw)
+		#rospy.Subscriber('/drone_yaw',Float64,self.setyaw)
 		#------------------------------------------------------------------------------------------------------------
-
+		rospy.Subscriber('/yawyaw',Float64,self.setyaw)
+		#data = rospy.Service('PlutoService', PlutoPilot, self.setyaw)
 		self.arm() # ARMING THE DRONE
 
 
@@ -152,26 +157,27 @@ class Edrone():
 	# Callback function for /pid_tuning_altitude
 	# This function gets executed each time when /tune_pid publishes /pid_tuning_altitude
 	def altitude_set_pid(self,alt):
-		self.Kp[2] = alt.Kp * 0.06 # This is just for an example. You can change the fraction value accordingly
-		self.Ki[2] = alt.Ki * 0.008
-		self.Kd[2] = alt.Kd * 0.3
+		self.Kp[2] = alt.Kp #* 0.06 # This is just for an example. You can change the fraction value accordingly
+		self.Ki[2] = alt.Ki #* 0.008
+		self.Kd[2] = alt.Kd #* 0.3
 
 	#----------------------------Define callback function like altitide_set_pid to tune pitch, roll and yaw as well--------------
 
 	def pitch_set_pid(self,pit):
-		self.Kp[0] = pit.Kp * 0.06 
-		self.Ki[0] = pit.Ki * 0.008
-		self.Kd[0] = pit.Kd * 0.3
+		self.Kp[0] = pit.Kp #* 0.06 
+		self.Ki[0] = pit.Ki #* 0.008
+		self.Kd[0] = pit.Kd #* 0.3
 	def roll_set_pid(self,rol):
-		self.Kp[1] = rol.Kp * 0.06 
-		self.Ki[1] = rol.Ki * 0.008
-		self.Kd[1] = rol.Kd * 0.3
+		self.Kp[1] = rol.Kp #* 0.06 
+		self.Ki[1] = rol.Ki #* 0.008
+		self.Kd[1] = rol.Kd #* 0.3
 	def yaw_set_pid(self,yaw):
-		self.Kp[3] = yaw.Kp * 0.06
-		self.Ki[3] = yaw.Ki * 0.008
-		self.Kd[3] = yaw.Kd * 0.3
+		self.Kp[3] = yaw.Kp #* 0.06
+		self.Ki[3] = yaw.Ki #* 0.008
+		self.Kd[3] = yaw.Kd #* 0.3
 	def setyaw(self,yaw2):
-                self.drone_position[3]=yaw2.data
+		self.drone_position[3]=yaw2
+		print(yaw2)
 	#----------------------------------------------------------------------------------------------------------------------
 
 
@@ -201,7 +207,7 @@ class Edrone():
 		                self.dif_error= [a1-b1 for a1,b1 in zip(self.error,self.prev_error)]#derivative term- difference between current and previous error
 		                #Pitch, Roll, Throttle and Yaw are calculated with PID formulas
 		                self.cmd.rcPitch=int(1500+self.error[0]*self.Kp[0]+self.dif_error[0]*self.Kd[0]/(self.iterations*self.sample_time)+self.sum_values[0]*self.Ki[0]*self.sample_time*self.iterations)
-		                self.cmd.rcRoll=int(1500+self.error[1]*self.Kp[1]+self.dif_error[1]*self.Kd[1]/(self.sample_time*self.iterations)+self.sum_values[1]*self.Ki[1]*self.sample_time*self.iterations)
+		                #self.cmd.rcRoll=int(1500+self.error[1]*self.Kp[1]+self.dif_error[1]*self.Kd[1]/(self.sample_time*self.iterations)+self.sum_values[1]*self.Ki[1]*self.sample_time*self.iterations)
 		                self.cmd.rcThrottle=int(1500+self.error[2]*self.Kp[2]+self.dif_error[2]*self.Kd[2]/(self.sample_time*self.iterations)+self.sum_values[2]*self.Ki[2]*self.sample_time*self.iterations)
 		                self.cmd.rcYaw=int(1500+self.error[3]*self.Kp[3]+self.dif_error[3]*self.Kd[3]/(self.sample_time*self.iterations)+self.sum_values[3]*self.Ki[3]*self.sample_time*self.iterations)
 		                self.lasttime=self.currenttime#The last time stamp is updated
