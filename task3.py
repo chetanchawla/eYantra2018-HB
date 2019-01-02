@@ -60,16 +60,21 @@ class Edrone():
 		self.cmd.rcAUX4 = 1500
 		# self.cmd.plutoIndex = 0
 		self.iterations=1
-
+		self.throttle_Iterm=0.0
+		self.roll_Iterm= 0.0
+		self.pitch_Iterm=0.0
 		#initial setting of Kp, Kd and ki for [pitch, roll, throttle, yaw]. eg: self.Kp[2] corresponds to Kp value in throttle axis
 		#after tuning and computing corresponding PID parameters, change the parameters
 		# self.Kp = [7.68,7.68,58.32,0]
 		# self.Ki = [0,0,0.256,0]
 		# self.Kd = [6.3,12.9,227.7,0]
 		#As the drone is not rotating itself, we are using yaw parameters as 0.
-		self.Kp = [3.5,3.5,24,3]
-		self.Ki = [0,0,0,0]
-		self.Kd = [3.5,3.5,4,0.2]
+		# self.Kp = [4.5,4.5,24,6]
+		# self.Ki = [0,0,0,0]
+		# self.Kd = [0.95,0.95,4,8]
+		self.Kp=[6,4.5,24,0.3]
+		self.Ki=[0,0,0,0]
+		self.Kd=[14.6,4.2,4,0.2]
 
 
 		#-----------------------Add other required variables for pid here ----------------------------------------------
@@ -81,8 +86,8 @@ class Edrone():
                 self.error=[0.0,0.0,0.0,0.0]#It stores the current computed error between desired point and self point
                 self.lasttime=time.time()#Used for sample time calling of the pid function
                 self.currenttime=0
-                self.max_values = [1800,1800,2000,1800]#The max and min values of pitch, roll, throttle and yaw are specified 
-                self.min_values = [1200,1200,1400,1200]
+                self.max_values = [1575,1575,1800,1800]#The max and min values of pitch, roll, throttle and yaw are specified 
+                self.min_values = [1425,1425,1200,1200]
 
 
 		# Hint : Add variables for storing previous errors in each axis, like self.prev_values = [0,0,0,0] where corresponds to [pitch, roll, throttle, yaw]
@@ -92,7 +97,7 @@ class Edrone():
 		#----------------------------------------------------------------------------------------------------------
 
 		# This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
-		self.sample_time = 0.060 # in seconds (60 milliseconds)
+		self.sample_time = 0.010 # in seconds (60 milliseconds)
 
 
 		# Making Publishers for /drone_command, /alt_error, /pitch_error, /roll_error, /yaw_error
@@ -165,13 +170,13 @@ class Edrone():
 	#----------------------------Define callback function like altitide_set_pid to tune pitch, roll and yaw as well--------------
 
 	def pitch_set_pid(self,pit):
-		self.Kp[0] = pit.Kp*0.1 
-		self.Ki[0] = pit.Ki*0.1
-		self.Kd[0] = pit.Kd*0.1 
+		self.Kp[0] = pit.Kp 
+		self.Ki[0] = pit.Ki
+		self.Kd[0] = pit.Kd*0.2
 	def roll_set_pid(self,rol):
 		self.Kp[1] = rol.Kp #* 0.06 
 		self.Ki[1] = rol.Ki #* 0.008
-		self.Kd[1] = rol.Kd #* 0.3
+		self.Kd[1] = rol.Kd*2 #* 0.3
 	def yaw_set_pid(self,yaw):
 		self.Kp[3] = yaw.Kp *0.1
 		self.Ki[3] = yaw.Ki *0.05
@@ -197,7 +202,7 @@ class Edrone():
 	#	8. Add error_sum
                 self.currenttime=time.time()#Takes the current time stamp
                 self.error=[a1-b1 for a1,b1 in zip(self.drone_position,self.setpoint)]#Calculates the error by subtracting drone position and setpoint positions
-                print("error",self.error[3])
+                #print("error",self.error[3])
                 #self.pitcherr.publish(self.error[0])#Publishes the respective errors for the plot juggler
             	#self.rollerr.publish(self.error[1])
             	#self.alterr.publish(self.error[2])
@@ -206,16 +211,30 @@ class Edrone():
                 if(self.currenttime-self.lasttime>=self.sample_time):
 
                 	# If the sample time has elapsed, tune PID
+		                
 		                self.dif_error= [a1-b1 for a1,b1 in zip(self.error,self.prev_error)]#derivative term- difference between current and previous error
 		                #Pitch, Roll, Throttle and Yaw are calculated with PID formulas
 		                self.cmd.rcPitch=1500 + (self.error[1]*self.Kp[0]+self.dif_error[1]*self.Kd[0]/(self.sample_time)+self.sum_values[1]*self.Ki[0]*self.sample_time*self.iterations)
 		                self.cmd.rcRoll=1500 - (self.error[0]*self.Kp[1]+self.dif_error[0]*self.Kd[1]/(self.sample_time)+self.sum_values[0]*self.Ki[1]*self.sample_time*self.iterations)
-		                self.cmd.rcThrottle=1500 + self.error[2]*self.Kp[2]+self.dif_error[2]*self.Kd[2]/(self.sample_time*self.iterations)+self.sum_values[2]*self.Ki[2]*self.sample_time*self.iterations
-		                self.cmd.rcYaw=1500+(self.error[3]*self.Kp[3]+self.dif_error[3]*self.Kd[3]/(self.sample_time)+self.sum_values[3]*self.Ki[3]*self.sample_time*self.iterations)
+		                self.cmd.rcThrottle=1500 + self.error[2]*self.Kp[2]+self.dif_error[2]*self.Kd[2]/(self.sample_time)+self.sum_values[2]*self.Ki[2]*self.sample_time*self.iterations
+		                self.cmd.rcYaw=1500-(self.error[3]*self.Kp[3]+self.dif_error[3]*self.Kd[3]/(self.sample_time)+self.sum_values[3]*self.Ki[3]*self.sample_time*self.iterations)
 		                self.lasttime=self.currenttime#The last time stamp is updated
 		                self.prev_error=self.error#Previous error term is updated
 		                #self.sum_values=[0.0,0.0,0.0,0.0]#Sum of errors is reinitialized after sample time
 		                #For checking that the pitch, roll, throttle and yaw values are within the max and minimum permissible values
+		                '''
+		                #self.roll_Iterm = self.roll_Iterm  + (self.error[0]/20)
+		                self.pitch_Iterm = self.pitch_Iterm  + (self.error[1]/20)
+		                self.throttle_Iterm = self.throttle_Iterm  + (self.error[2]/100)
+
+		                #self.out_roll = (self.Kp[1] * self.error[0]) + (self.roll_Iterm * self.Ki[1]) + (self.Kd[1] * (self.error[0]- self.prev_error[0]))
+		                self.out_pitch = (self.Kp[0] * self.error[1]) + (self.pitch_Iterm * self.Ki[0]) + (self.Kd[0] *(self.error[1] - self.prev_error[1]))
+		                self.out_throttle= (self.Kp[2] * self.error[2]) + (self.throttle_Iterm * self.Ki[2]) + (self.Kd[2] * (self.error[2] - self.prev_error[2]))
+
+		                #self.cmd.rcRoll= 1500  + self.out_roll
+		                self.cmd.rcPitch =1500 + self.out_pitch
+		                self.cmd.rcThrottle = 1500 + self.out_throttle
+						'''
 		                if self.cmd.rcPitch > self.max_values[0]:
 		                	self.cmd.rcPitch = self.max_values[0]
 		                elif self.cmd.rcPitch < self.min_values[0]:
