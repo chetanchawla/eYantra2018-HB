@@ -1,0 +1,9 @@
+eYRC HB#5374
+We have updated the data_via_rosservice file to make a publisher which send the yaw value of the drone for the Yaw tuning
+Hence, we have attached the data_via_rosservice file of the plutoserver package. (It can alternatively be used as a node in the launch file)
+
+We have added the keys for use to set the tree positions and disarming the drone via our python code using key '7' (alternative to key 'd')
+Hence, we have attached the key_command.py script of the plutoserver package.
+
+Compiled launch file is also attached
+Task3_HB#5374.launch
