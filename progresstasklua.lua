@@ -42,7 +42,7 @@ function sysCall_init()
     --------------------Add your publisher and subscriber nodes here ---------------------
 
     path_pub=simROS.advertise('/vrep/waypoints', 'geometry_msgs/PoseArray')    -- Publish the computed path under the topic /vrep/waypoints
-
+    inoutofloop=0
     counter=0
     make_path=simROS.subscribe('/checking','geometry_msgs/PoseArray','initiatepath',1) -- Subscriber is called whenever the python code asks for a new path. The message is os PoseArray type and function initiatepath is called
     aruco_sub=simROS.subscribe('/aruco_marker_publisher/markers','aruco_msgs/MarkerArray','aruco_callback') --to find the orientation of the aruco markers in a scene  
@@ -109,21 +109,39 @@ function packdata(path)
         pose.position.y = -7.604*pose.position.y
         pose.position.z = 30.54 - (11.44*pose.position.z)
         sender.poses[math.floor(i/7) + 1] = pose
-    a = {x = path[i+3], y = path[i+4], w = path[i+5], z = path[i+6]}
-    b = {x = path[i], y = path[i+1], z = path[i+2]}
-    pose = {position = b, orientation = a, }
-
-        -------------------Add x, y and z value after converting real_world to whycon_world using the computed scale_factor--------------------------------
-        --RealToWhycon={-7.557,-7.604,18.97} -- scale factors
-    RealToWhycon={-7.557,-7.604,18.97} -- scale factors
-    setZ=55.60 --the ground level coordinate in z axis of whycon is 55.60 for 0 z axis coordinate in real world coordinates
-    pose.position.x = -7.557*pose.position.x
-    pose.position.y = -7.604*pose.position.y
-    pose.position.z = 30.54 - (11.44*pose.position.z)
-    sender.poses[math.floor(i/7) + 1] = pose
-
-        --------------------------------------------------------------------------------------------------------------------
     end
+    if inoutofloop == 0 then
+        poseb=getpose(goal1_back)
+        a = {x = poseb[1], y = poseb[2], w = poseb[3], z = poseb[4]}
+        b = {x = poseb[5], y = poseb[6], z = poseb[7]}
+        pose = {position = b, orientation = a, }
+
+            -------------------Add x, y and z value after converting real_world to whycon_world using the computed scale_factor--------------------------------
+            --RealToWhycon={-7.557,-7.604,18.97} -- scale factors
+        RealToWhycon={-7.557,-7.604,18.97} -- scale factors
+        setZ=55.60 --the ground level coordinate in z axis of whycon is 55.60 for 0 z axis coordinate in real world coordinates
+        pose.position.x = -7.557*pose.position.x
+        pose.position.y = -7.604*pose.position.y
+        pose.position.z = 30.54 - (11.44*pose.position.z)
+        sender.poses[math.floor(i/7) + 1] = pose
+        
+        posef=getpose(goal1_front)
+        a = {x = posef[1], y = posef[2], w = posef[3], z = posef[4]}
+        b = {x = posef[5], y = posef[6], z = posef[7]}
+        pose = {position = b, orientation = a, }
+
+            -------------------Add x, y and z value after converting real_world to whycon_world using the computed scale_factor--------------------------------
+            --RealToWhycon={-7.557,-7.604,18.97} -- scale factors
+        RealToWhycon={-7.557,-7.604,18.97} -- scale factors
+        setZ=55.60 --the ground level coordinate in z axis of whycon is 55.60 for 0 z axis coordinate in real world coordinates
+        pose.position.x = -7.557*pose.position.x
+        pose.position.y = -7.604*pose.position.y
+        pose.position.z = 30.54 - (11.44*pose.position.z)
+        sender.poses[math.floor(i/7) + 1] = pose
+        inoutofloop=1
+    end
+        --------------------------------------------------------------------------------------------------------------------
+    
     -- Debug if the path computed are correct. Display the computed path and see if the path points moves from drone to the target point
     return sender
 end
