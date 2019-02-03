@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 '''
 
@@ -40,7 +40,7 @@ class Edrone():
 		self.drone_position = [0.0,0.0,0.0,0.0]	
 		
 		
-		self.initial_waypoint = [-5.6,-2,22,0] # whycon marker at the position of the initial waypoint in the scene (blue sphere). These are whycon coordinates of the same
+		self.initial_waypoint = [-5.6,-2,24,0] # whycon marker at the position of the initial waypoint in the scene (blue sphere). These are whycon coordinates of the same
 		#Here, the yaw desired is taken to be 0 while all the other point values are taken from the Target whycon marker (set renderable) as detected by the vision sensor.
 		# [x_setpoint, y_setpoint, z_setpoint, yaw_value_setpoint]
 		self.setpoint = self.initial_waypoint
@@ -59,7 +59,7 @@ class Edrone():
 		#The number of points that we want to get from the Lua code in a path. This is set to be 25.
 		self.pointsInPath=20
 		#Declaring and empty initialization of a list to store points given in a path by the OMPL library
-		w, h = 4, self.pointsInPath
+		w, h = 4, 32
 		self.path = [[0.0 for x in range(w)] for y in range(h)] 
 		#Counter is used to count the number of points that are reached in the path within the maximum error threshold
 		self.counter=0
@@ -72,15 +72,12 @@ class Edrone():
 		
 		self.iterations=1 #it is used to save the no. of iterations to know total time
 		
-		
+		self.pathreceived=0
 		#values of Kp, Kd and ki for [pitch, roll, throttle, yaw]. eg: self.Kp[2] corresponds to Kp value in throttle axis
 		
-		# self.Kp=[6,4.5,24,0.3]
-		# self.Ki=[0,0,0,0]
-		# self.Kd=[14.6,4.2,4,0.2]
-		self.Kp=[6,4.5,50,0.3]
+		self.Kp=[6,4.5,24,0.3]
 		self.Ki=[0,0,0,0]
-		self.Kd=[14.6,5,3,0.6]
+		self.Kd=[14.6,4.2,4,0.2]
 		#As the drone is not rotating itself, we are using yaw parameters as 0.
 		#self.Kp = [0,0,0,0]
 		#self.Ki = [0,0,0,0]
@@ -123,16 +120,17 @@ class Edrone():
 		self.arm() # ARMING THE DRONE
 	#This function is called whenever the drone requires the next path points to be traversed
 	def getnewpath(self,msg):
-		print("Getting new path")
+		print("Getting path")
 		#Adds the points in the path list
-		for i in range(0,self.pointsInPath):	
+		for i in range(1,self.pointsInPath+1):	
 			self.path[i]=[msg.poses[i].position.x,msg.poses[i].position.y,msg.poses[i].position.z,0.0]
+		self.pathreceived=1
 		#Reinitializes the success variable and sets the setpoint as the path's first point
-		self.success=0
-		self.initial=1
-		self.requested=0
-		self.counter=0
-		self.setpoint=self.path[0]
+		# self.success=0
+		# self.initial=1
+		# self.requested=0
+		# self.counter=0
+		# self.setpoint=self.path[0]
 
 	# Disarming condition of the drone
 	def disarm(self):
@@ -198,7 +196,7 @@ class Edrone():
 		#Sets the PID
                 self.currenttime=time.time()#Takes the current time stamp
                 self.error=[a1-b1 for a1,b1 in zip(self.drone_position,self.setpoint)]#Calculates the error by subtracting drone position and setpoint positions
-                thresh=0.5 # Threshold value or maximum error acceptable at a point in pitch and roll
+                thresh=1 # Threshold value or maximum error acceptable at a point in pitch and roll
                 threshZ=2# Threshold value or maximum error acceptable at a point in altitude
                 #if the drone is not on the final position (where it needs to just stay in the PID loop until new path points are received)
                 if self.success == 0:
@@ -214,22 +212,22 @@ class Edrone():
 	                			break
 	                	elif(i == 3):
 	                		# If the error is within the maximum acceptable error range
-	                		if(self.initial==0):
-	                			#if the goal was the initial waypoint
-	                			self.success=1
-	                			print("Initial WayPoint Reached")
-	                			return
-	                		else:
+	                		# if(self.initial==0):
+	                		# 	#if the goal was the initial waypoint
+	                		# 	self.success=1
+	                		# 	print("Initial WayPoint Reached")
+	                		# 	return
+	                		# else:
 	                			# If it is any other point in the path
-		                		self.counter=self.counter+1# Increment the counter
-		                		print("reached point ", self.counter)
-		                		if(self.counter == self.pointsInPath):# If all the points in the path are covered
-		                			self.success=1
-		                			print("reached goal")
-		                			return
-		                		# change the setpoint to the next point in the path
-		                		self.setpoint= self.path[self.counter]
-		                		return
+	                		self.counter=self.counter+1# Increment the counter
+	                		print("reached point ", self.counter)
+	                		if(self.counter == 38):# If all the points in the path are covered
+	                			self.success=1
+	                			print("reached final goal")
+	                			return
+	                		# change the setpoint to the next point in the path
+	                		self.setpoint= self.path[self.counter]
+	                		return
              	# self.pitcherr.publish(self.error[0])#Publishes the respective errors for the plot juggler
             	# self.rollerr.publish(self.error[1])
             	# self.alterr.publish(self.error[2])
@@ -267,28 +265,46 @@ class Edrone():
 	                self.iterations=self.iterations+1  #add karna hai
                         
 
-
-if __name__ == '__main__':
-	e_drone = Edrone()
+if __name__=="__main__":
+	e_drone=Edrone()
+	e_drone.path[0]=e_drone.setpoint
+	e_drone.reqpath.publish(e_drone.get)
+	while(e_drone.pathreceived == 0):
+		continue
+		#print("path yet to be received")
+	print("half path received")
+	y=e_drone.pointsInPath-1
+	for i in range(e_drone.pointsInPath+1,38):
+		e_drone.path[i]=e_drone.path[y]
+		y=y-1
 	while not rospy.is_shutdown():
-		#start the pid loop
 		e_drone.pid()
-		#if any of the set goal is reached
 		if e_drone.success == 1:
-			# If the goal is not initial waypoint (first point)
-			if e_drone.initial != 0:
-				#checking if the loop to the initial point is complete (drone comes back to initial waypoint after all the goal points)
-				if e_drone.counter==e_drone.pointsInPath:
-					errX=e_drone.drone_position[0]-e_drone.initial_waypoint[0]
-					errY=e_drone.drone_position[1]-e_drone.initial_waypoint[1]
-					errZ=e_drone.drone_position[2]-e_drone.initial_waypoint[2]
-					print(e_drone.drone_position)
-					if abs(errX)<0.5 and abs(errY)<0.5 and abs(errZ)<2:
-						print("Disarm")
-						e_drone.disarm()
-						break
-			# If new path is required)
-			if e_drone.requested==0:
-				#Get the new path points
-				e_drone.reqpath.publish(e_drone.get)
-				e_drone.requested=1
+			print("Disarming")
+			e_drone.disarm()
+			break
+
+# if __name__ == '__main__':
+# 	e_drone = Edrone()
+# 	while not rospy.is_shutdown():
+# 		#start the pid loop
+# 		e_drone.pid()
+# 		#if any of the set goal is reached
+# 		if e_drone.success == 1:
+# 			# If the goal is not initial waypoint (first point)
+# 			if e_drone.initial != 0:
+# 				#checking if the loop to the initial point is complete (drone comes back to initial waypoint after all the goal points)
+# 				if e_drone.counter==e_drone.pointsInPath:
+# 					errX=e_drone.drone_position[0]-e_drone.initial_waypoint[0]
+# 					errY=e_drone.drone_position[1]-e_drone.initial_waypoint[1]
+# 					errZ=e_drone.drone_position[2]-e_drone.initial_waypoint[2]
+# 					print(e_drone.drone_position)
+# 					if abs(errX)<0.5 and abs(errY)<0.5 and abs(errZ)<0.5:
+# 						print("Disarm")
+# 						e_drone.disarm()
+# 						break
+# 			# If new path is required)
+# 			if e_drone.requested==0:
+# 				#Get the new path points
+# 				e_drone.reqpath.publish(e_drone.get)
+# 				e_drone.requested=1

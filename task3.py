@@ -69,9 +69,9 @@ class Edrone():
 		# self.Ki = [0,0,0.256,0]
 		# self.Kd = [6.3,12.9,227.7,0]
 		#As the drone is not rotating itself, we are using yaw parameters as 0.
-		# self.Kp = [4.5,4.5,24,6]
-		# self.Ki = [0,0,0,0]
-		# self.Kd = [0.95,0.95,4,8]
+		# self.Kp=[6,4.5,50,0.3]
+		# self.Ki=[0,0,0,0]
+		# self.Kd=[14.6,5,3,0.6]
 		self.Kp=[6,4.5,24,0.3]
 		self.Ki=[0,0,0,0]
 		self.Kd=[14.6,4.2,4,0.2]
@@ -115,7 +115,7 @@ class Edrone():
 		# Subscribing to /whycon/poses, /drone_yaw, /pid_tuning_altitude, /pid_tuning_pitch, pid_tuning_roll
 		rospy.Subscriber('/whycon/poses', PoseArray, self.whycon_callback)
 		rospy.Subscriber('/pid_tuning_altitude',PidTune,self.altitude_set_pid)
-		rospy.Subscriber('/input_key',Int16,self.getInp)
+		#rospy.Subscriber('/input_key',Int16,self.getInp)
 		#-------------------------Add other ROS Subscribers here----------------------------------------------------
                 rospy.Subscriber('/pid_tuning_pitch',PidTune,self.pitch_set_pid)
                 rospy.Subscriber('/pid_tuning_roll',PidTune,self.roll_set_pid)
@@ -178,9 +178,9 @@ class Edrone():
 		self.Ki[1] = rol.Ki #* 0.008
 		self.Kd[1] = rol.Kd*2 #* 0.3
 	def yaw_set_pid(self,yaw):
-		self.Kp[3] = yaw.Kp *0.1
-		self.Ki[3] = yaw.Ki *0.05
-		self.Kd[3] = yaw.Kd *0.1
+		self.Kp[3] = yaw.Kp# *0.1
+		self.Ki[3] = yaw.Ki# *0.05
+		self.Kd[3] = yaw.Kd# *0.1
 	def setyaw(self,yaw2):
 		self.drone_position[3]=yaw2.data
 		#print(self.drone_position[3])
@@ -257,13 +257,13 @@ class Edrone():
 		                self.iterations=self.iterations+1
                         
 
-	def getInp(self,msg):
-		if msg==7:
-			self.disarm()
-		elif msg==8:
-			e_drone=Edrone()
-			while not rospy.is_shutdown():
-				e_drone.pid()
+	# def getInp(self,msg):
+	# 	if msg==7:
+	# 		self.disarm()
+	# 	elif msg==8:
+	# 		e_drone=Edrone()
+	# 		while not rospy.is_shutdown():
+	# 			e_drone.pid()
 				
 if __name__ == '__main__':
 	e_drone = Edrone()
