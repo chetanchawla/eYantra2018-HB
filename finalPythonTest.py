@@ -50,7 +50,7 @@ class Edrone():
 		#self.pno=self.goalset.length()
 		self.pointsInPath=20
 		#The number of points that we want to get from the Lua code in a path. This is set to be 20.
-		self.h = self.pno*(self.pointsInPath+1)-1 #setting the size of path array
+		self.h = self.pno*(self.pointsInPath+1)-2 #setting the size of path array
 		self.prec=0 # no. of path points received
 		######################################################################################################################################
 
@@ -151,7 +151,7 @@ class Edrone():
 		for i in range(0,self.pointsInPath):	
 			self.path[self.prec]=[msg.poses[i].position.x,msg.poses[i].position.y,msg.poses[i].position.z,0.0]
 			self.prec=self.prec+1
-		if(self.prec<self.h):
+		if(self.prec<self.h-self.pointsInPath):
 			self.path[self.prec]=self.path[self.prec-2]
 		self.pathreceived=1
 		
