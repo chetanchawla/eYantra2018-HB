@@ -154,6 +154,7 @@ class Edrone():
 			self.prec=self.prec+1
 		if(self.prec<self.h-self.pointsInPath):
 			self.path[self.prec]=self.path[self.prec-2]
+			self.prec=self.prec+1
 		self.pathreceived=1
 		
 
@@ -303,6 +304,9 @@ if __name__=="__main__":
 	# 	e_drone.path[i]=e_drone.path[y]
 	# 	y=y-1
 	#print("poora received")
+	print(e_drone.path)
+	e_drone.setpoint=e_drone.path[0]
+	print(e_drone.setpoint)
 	while not rospy.is_shutdown(): #run unless ros is shutdown
 		e_drone.pid()
 		if e_drone.success == 1:  #disaem when it reaches the last point i.e. back at the initial waypoint
