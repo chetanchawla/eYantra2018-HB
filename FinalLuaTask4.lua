@@ -101,7 +101,7 @@ end
 function getpose(handle,ref_handle)
     position = sim.getObjectPosition(handle,ref_handle)
     orientation = sim.getObjectQuaternion(handle,ref_handle)
-    pose = {position[1],position[2],position[3],orientation[1],orientation[2],orientation[3],orientation[4]}
+    pose = {position[1],-position[2],position[3],orientation[1],orientation[2],orientation[3],orientation[4]}
     return pose
 end
 
