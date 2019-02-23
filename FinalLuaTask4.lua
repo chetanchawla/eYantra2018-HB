@@ -36,7 +36,10 @@ function sysCall_init()
     cashew=sim.getObjectHandle('Position_hoop3')    --cashew tree
     mango=sim.getObjectHandle('Position_hoop2')     --mango tree
     sal=sim.getObjectHandle('Position_hoop1')       --sal tree
-    nofruit=sim.getObjectHandle('obstacle_1')       --non-fruit tree
+    nofruit1=sim.getObjectHandle('obstacle_1')       --non-fruit tree
+    nofruit2=sim.getObjectHandle('obstacle_2')
+    nofruit3=sim.getObjectHandle('obstacle_3')
+    noFruitCounter=0
 
     ------------Add the path planning task initial details------------------
     t=simOMPL.createTask('t')
@@ -90,7 +93,7 @@ function visualizePath( path )
     if path then
         local pc=#path/7
         for i=1,pc-1,1 do
-            lineDat={path[(i-1)*7+1],path[(i-1)*7+2],path[(i-1)*7+3],path[i*7+1],path[i*7+2],path[i*7+3]}
+            lineDat={path[(i-1)*7+1],-path[(i-1)*7+2],path[(i-1)*7+3],path[i*7+1],-path[i*7+2],path[i*7+3]}
             sim.addDrawingObjectItem(_lineContainer,lineDat)
         end
     end
@@ -278,8 +281,14 @@ function key_callback(msg)
         
     elseif msg.data==5 then
         --set position of non-fruit tree
-        sim.setObjectPosition(nofruit,-1,{wx,wy,wz+0.3})
-
+        noFruitCounter=noFruitCounter+1
+        if noFruitCounter==1 then
+            sim.setObjectPosition(nofruit1,-1,{wx,wy,wz+0.3})
+        elseif noFruitCounter==2 then
+            sim.setObjectPosition(nofruit2,-1,{wx,wy,wz+0.3})
+        elseif noFruitCounter==3 then
+            sim.setObjectPosition(nofruit3,-1,{wx,wy,wz+0.3})
+        end
     elseif msg.data==6 then
         -- set all trees outside the arena before setting their positions
         --setting wx,wy,wz to values that are outside of arena
@@ -289,9 +298,11 @@ function key_callback(msg)
         sim.setObjectPosition(sal,-1,{wx,wy,wz})        --set sal outside the arena
         sim.setObjectPosition(mango,-1,{wx+1,wy,wz})    --set mango outside the arena
         sim.setObjectPosition(cashew,-1,{wx+2,wy,wz})   --set cashew outside the arena
-        sim.setObjectPosition(nofruit,-1,{wx+3,wy,wz})  --set non-fruit tree outside the arena
+        sim.setObjectPosition(nofruit1,-1,{wx+3,wy,wz})  --set non-fruit 1 tree outside the arena
+        sim.setObjectPosition(nofruit2,-1,{wx+3,wy,wz})  --set non-fruit 1 tree outside the arena
+        sim.setObjectPosition(nofruit3,-1,{wx+3,wy,wz})  --set non-fruit 1 tree outside the arena
     elseif msg.data==8 then
-        sim.setObjectPosition(initial_handle,-1,{wx,-wy,wz+0.8})
+        sim.setObjectPosition(initial_handle,-1,{wx,wy,wz+0.8})
         emulate=true
         sim.setObjectOrientation(initial_handle,-1,{0,0,0})
         sim.setObjectOrientation(red_front,-1,{0,0,0})

@@ -45,7 +45,7 @@ class Edrone():
 		# home= green
 
 		
-		self.pno=5  # no. of paths required
+		self.pno=6  # no. of paths required
 		#self.goalset=[goal1,home,goal2,home,init]  # no. of goals required
 		#self.pno=self.goalset.length()
 		self.pointsInPath=7
@@ -108,8 +108,8 @@ class Edrone():
 		self.error=[0.0,0.0,0.0,0.0]#It stores the current computed error between desired point and self point
 		self.lasttime=time.time()#Used for sample time calling of the pid function
 		self.currenttime=0
-		self.max_values = [1575,1575,1800,1800]#The max and min values of pitch, roll, throttle and yaw are specified 
-		self.min_values = [1425,1425,1425,1200]
+		self.max_values = [1525,1525,1800,1800]#The max and min values of pitch, roll, throttle and yaw are specified 
+		self.min_values = [1475,1475,1425,1200]
 		
 
 		# This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
@@ -168,6 +168,14 @@ class Edrone():
 		self.command_pub.publish(self.cmd)
 		rospy.sleep(1)
 
+	'''
+	* Function Name: decrease_height
+	* Logic: Decreases the throttle of the drone to make it land
+	* Example Call: e_drone.decrease_height()
+	'''
+	def decrease_height(self):
+		self.cmd.rcThrottle =1400
+		self.command_pub.publish(self.cmd)
 
 	'''
 	* Function Name: armBest pr
@@ -309,8 +317,12 @@ if __name__=="__main__":
 	print(e_drone.setpoint)
 	while not rospy.is_shutdown(): #run unless ros is shutdown
 		e_drone.pid()
-		if e_drone.success == 1:  #disaem when it reaches the last point i.e. back at the initial waypoint
+		if e_drone.success == 1:  #disarm when it reaches the last point i.e. back at the initial waypoint
 			#print("Disarming")
+			while(e_drone.drone_position[2]<30):
+				# e_drone.Launchpad=e_drone.path[0]
+				# e_drone.Launchpad[2]=e_drone.Launchpad[2]-8
+				e_drone.decrease_height()
 			e_drone.disarm()
 			break
 
